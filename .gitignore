@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+data/input/*
+!data/input/.gitkeep
+data/processed/
+data/failed/
+data/*.log
+.claude/

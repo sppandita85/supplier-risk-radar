@@ -1,0 +1,32 @@
+# The 5 monitored suppliers (fictional). criticality: 1 (low) .. 5 (business critical)
+suppliers:
+  - id: APEX
+    name: Apex Semiconductors
+    category: Electronics components
+    country: Taiwan
+    tier: 1
+    criticality: 5
+  - id: NORDIC
+    name: Nordic Steelworks
+    category: Raw materials
+    country: Sweden
+    tier: 1
+    criticality: 3
+  - id: MERIDIAN
+    name: Meridian Logistics
+    category: Freight & logistics
+    country: Singapore
+    tier: 1
+    criticality: 4
+  - id: VERDANT
+    name: Verdant Chemicals
+    category: Specialty chemicals
+    country: Germany
+    tier: 2
+    criticality: 3
+  - id: SUNRISE
+    name: Sunrise Textiles
+    category: Textiles & packaging
+    country: Bangladesh
+    tier: 2
+    criticality: 2

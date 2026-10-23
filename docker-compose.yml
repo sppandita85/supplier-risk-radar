@@ -1,0 +1,53 @@
+# Supplier Risk Radar stack.
+#   docker compose up -d                      # Postgres + dashboard (http://localhost:8502) + file watcher
+#   docker compose run --rm worker python -m radar.synth --days 60   # generate synthetic updates
+#   docker compose --profile phoenix up -d    # also start a bundled Phoenix (otherwise uses the host's :6006)
+# Ollama runs on the host (http://host.docker.internal:11434) with llama3.1:8b pulled.
+x-radar: &radar
+  image: ghcr.io/sppandita85/supplier-risk-radar:latest
+  build: .
+  environment:
+    PG_DSN: host=db dbname=risk_radar user=radar password=radar
+    OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+    OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    PHOENIX_COLLECTOR_ENDPOINT: ${PHOENIX_COLLECTOR_ENDPOINT:-http://host.docker.internal:6006}
+    TRACING: ${TRACING:-on}
+  volumes:
+    - ./data:/app/data
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: radar
+      POSTGRES_DB: risk_radar
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar -d risk_radar"]
+      interval: 5s
+      retries: 10
+
+  dashboard:
+    <<: *radar
+    ports:
+      - "${DASHBOARD_PORT:-8502}:8501"
+
+  worker:
+    <<: *radar
+    command: ["python", "-m", "radar.watch", "--correlation", "both"]
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    profiles: ["phoenix"]
+    ports:
+      - "${PHOENIX_PORT:-6006}:6006"
+
+volumes:
+  pgdata:

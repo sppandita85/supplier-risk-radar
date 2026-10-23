@@ -1,0 +1,27 @@
+# Correlation rules. A candidate becomes an alert when its score >= alert_threshold.
+# Score is multiplied by the supplier criticality weight: 0.8 + 0.1 * criticality.
+version: v1
+alert_threshold: 10
+min_confidence: 0.5        # signals below this confidence are ignored by correlation
+
+rules:
+  burst:
+    enabled: true
+    window_days: 7
+    min_signals: 3
+  severity_accumulation:
+    enabled: true
+    window_days: 14
+    min_signals: 2
+  multi_category:
+    enabled: true
+    window_days: 10
+    min_categories: 2
+  escalation:
+    enabled: true
+    window_days: 21
+    min_steps: 3
+  critical_event:
+    enabled: true
+    min_severity: 5
+    min_confidence: 0.8
