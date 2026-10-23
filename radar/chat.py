@@ -12,8 +12,8 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from .config import LLM_TIMEOUT, OLLAMA_MODEL, OLLAMA_URL
 from . import tracing
+from .config import LLM_TIMEOUT, OLLAMA_MODEL, OLLAMA_URL
 from .db import connect
 from .llm import CATEGORIES
 

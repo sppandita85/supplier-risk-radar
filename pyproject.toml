@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: needs Postgres via PG_DSN (LLM is stubbed)"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I"]
+ignore = ["E702", "E701", "B008", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"dashboard/app.py" = ["E402", "E501"]
+"radar/synth.py" = ["E501"]  # long template sentences
