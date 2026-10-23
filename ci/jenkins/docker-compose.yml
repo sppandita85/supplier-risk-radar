@@ -1,0 +1,21 @@
+# Local Jenkins for Supplier Risk Radar CI.
+#   cp .env.example .env   # fill in GITHUB_TOKEN and an admin password
+#   docker compose up -d --build   -> http://localhost:8080
+services:
+  jenkins:
+    build: .
+    image: radar-jenkins:local
+    user: root                     # needs the host Docker socket to build and test images
+    env_file: .env
+    environment:
+      CASC_JENKINS_CONFIG: /var/jenkins_conf/casc.yaml
+    ports:
+      - "${JENKINS_PORT:-8080}:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./casc.yaml:/var/jenkins_conf/casc.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:

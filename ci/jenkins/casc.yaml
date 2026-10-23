@@ -1,0 +1,66 @@
+# Jenkins configuration as code. Values like ${GITHUB_TOKEN} come from ci/jenkins/.env (never committed).
+jenkins:
+  systemMessage: "Supplier Risk Radar CI: pull requests are built and tested automatically."
+  numExecutors: 2
+  mode: NORMAL
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github"
+              description: "GitHub token: scan repo, report PR status"
+              username: "${GITHUB_USER}"
+              password: "${GITHUB_TOKEN}"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "ghcr"
+              description: "ghcr.io push (main branch only)"
+              username: "${GITHUB_USER}"
+              password: "${GITHUB_TOKEN}"
+
+unclassified:
+  location:
+    url: "http://localhost:${JENKINS_PORT:-8080}/"
+
+jobs:
+  - script: >
+      multibranchPipelineJob('supplier-risk-radar') {
+        displayName('Supplier Risk Radar')
+        description('Builds every pull request (merged with its target) and main. Jenkinsfile in the repo root.')
+        branchSources {
+          branchSource {
+            source {
+              github {
+                id('supplier-risk-radar')
+                repoOwner('${GITHUB_USER}')
+                repository('supplier-risk-radar')
+                repositoryUrl('https://github.com/${GITHUB_USER}/supplier-risk-radar')
+                configuredByUrl(false)
+                credentialsId('github')
+                traits {
+                  gitHubBranchDiscovery { strategyId(1) }        // branches not also filed as PRs (e.g. main)
+                  gitHubPullRequestDiscovery { strategyId(1) }   // PRs from this repo, merged with target
+                }
+              }
+            }
+          }
+        }
+        triggers {
+          periodicFolderTrigger { interval('2m') }   // localhost can't receive GitHub webhooks, so poll
+        }
+        orphanedItemStrategy {
+          discardOldItems { numToKeep(10) }
+        }
+      }

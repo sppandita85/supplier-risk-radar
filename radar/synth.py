@@ -125,7 +125,7 @@ def batch(days: int, seed: int) -> int:
     start = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) - timedelta(days=days)
     n = 0
     for sup in load_suppliers():
-        for i in range(rnd.randint(26, 34)):                      # noise
+        for _ in range(rnd.randint(26, 34)):                      # noise
             when = start + timedelta(days=rnd.uniform(0, days), hours=rnd.randint(0, 23))
             _write(sup, when, *rnd.choice(NOISE), rnd, n); n += 1
         for _ in range(rnd.randint(0, 2)):                        # sparse isolated minor signals

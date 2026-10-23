@@ -120,6 +120,35 @@ Trace ids are stored on `classifications`, `alert_candidates` and `chat_log`, so
 Postgres row to its trace. The dashboard sidebar links to the project, and each chat answer
 links to its trace. Configure with `PHOENIX_COLLECTOR_ENDPOINT`, `PHOENIX_PROJECT`, `TRACING=off`.
 
+## CI/CD (Jenkins)
+Every pull request is built and tested by Jenkins ([Jenkinsfile](Jenkinsfile)). The result shows on
+the PR as a status check (`continuous-integration/jenkins/pr-merge`).
+
+| Stage | What it does |
+|---|---|
+| Build test image | `docker build --target test`: the shipped code plus pytest and ruff |
+| Lint | `ruff check .` |
+| Unit tests | rules engine, LLM-output validation and retries, file parsing (no DB, no LLM) |
+| Integration tests | throwaway Postgres: synth → ingest → rule + LLM correlation → chat tools → dashboard render. The LLM is stubbed, so CI needs no Ollama |
+| Build runtime image | `docker build .` |
+| Smoke test image | starts the image against Postgres; waits for a healthy dashboard and checks the schema |
+| Push image | `main` only: multi-arch build pushed to `ghcr.io/sppandita85/supplier-risk-radar:{latest,sha}` |
+
+Tests and JUnit reports are published in Jenkins. Run them locally with
+`pytest -m "not integration"`, or all of them with a scratch database:
+`createdb risk_radar_test && PG_DSN=dbname=risk_radar_test pytest`. The integration tests drop and
+recreate the schema, so never point them at real data.
+
+**Jenkins server** ([ci/jenkins/](ci/jenkins/)) runs in Docker and is fully configured as code: plugins,
+admin user, credentials, and a multibranch job that discovers branches and PRs.
+```bash
+cd ci/jenkins && cp .env.example .env    # set GITHUB_TOKEN and JENKINS_ADMIN_PASSWORD
+docker compose -p radar-jenkins up -d --build   # http://localhost:8080
+```
+Jenkins on localhost can't receive GitHub webhooks, so it checks GitHub for new PRs every 2 minutes.
+For instant builds, expose Jenkins with a tunnel (e.g. `ngrok http 8080`), add a GitHub webhook to
+`<tunnel-url>/github-webhook/`, and lengthen the poll interval in `casc.yaml`.
+
 ## Tables
 `suppliers`, `ingestion_runs`, `raw_updates`, `classifications`, `ingestion_failures`,
 `signals` (view), `correlation_runs`, `alert_candidates`, `alerts`, `chat_log` — see [db/schema.sql](db/schema.sql).

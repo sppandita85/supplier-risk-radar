@@ -71,7 +71,8 @@ def _validate(d: dict) -> dict:
     d["severity"] = sev if sev in SEVERITIES else "medium"
     d["confidence"] = max(0.0, min(1.0, float(d.get("confidence", 0.5))))
     ids = d.get("key_signal_ids") or []
-    d["key_signal_ids"] = [int(i) for i in ids if str(i).strip().lstrip("#").isdigit()] if isinstance(ids, list) else []
+    cleaned = [str(i).strip().lstrip("#") for i in ids] if isinstance(ids, list) else []
+    d["key_signal_ids"] = [int(i) for i in cleaned if i.isdigit()]
     for k, n in (("title", 150), ("summary", 1000), ("recommended_action", 400), ("reasoning", 500)):
         d[k] = str(d.get(k, ""))[:n]
     d["risk_themes"] = [str(t) for t in d.get("risk_themes", [])][:8] if isinstance(d.get("risk_themes"), list) else []
